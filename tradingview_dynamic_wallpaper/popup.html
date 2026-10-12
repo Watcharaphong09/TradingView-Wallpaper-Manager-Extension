@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Wallpaper Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">TRADINGVIEW</div>
+      <h1>Wallpaper Manager</h1>
+    </header>
+
+    <!-- Current wallpaper status -->
+    <div class="current-card" id="currentCard">
+      <div class="current-thumb" id="currentThumb">
+        <span id="currentThumbEmpty">No wallpaper active</span>
+      </div>
+      <div class="current-info">
+        <div class="current-name" id="currentName">—</div>
+        <div class="current-meta" id="currentMeta"></div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="quick-actions">
+      <button id="btnRemove" class="danger" disabled>Remove</button>
+    </div>
+
+    <!-- Recent wallpapers -->
+    <div class="section-label">RECENT</div>
+    <div id="recentList" class="recent-list">
+      <div class="empty-recent">No recent wallpapers.</div>
+    </div>
+
+    <!-- Open manager -->
+    <button id="btnOpenManager" class="primary open-btn">Open Wallpaper Manager ↗</button>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

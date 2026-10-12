@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Wallpaper Manager — TradingView</title>
+  <link rel="stylesheet" href="manager.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══════════════ TOP BAR ═══════════════ -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-eyebrow">TRADINGVIEW</span>
+      <span class="topbar-title">Wallpaper Manager</span>
+    </div>
+    <div class="topbar-actions">
+      <span id="tvStatus" class="chip info">Checking TradingView…</span>
+      <button class="btn-primary" id="btnUploadTop">+ Add Wallpaper</button>
+    </div>
+  </header>
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <nav class="sidebar">
+    <div class="sidebar-nav">
+      <button class="nav-item active" data-page="library">
+        <span class="icon">🖼</span> Library
+        <span class="nav-badge hidden" id="libraryBadge">0</span>
+      </button>
+      <button class="nav-item" data-page="favorites">
+        <span class="icon">⭐</span> Favorites
+        <span class="nav-badge hidden" id="favBadge">0</span>
+      </button>
+      <button class="nav-item" data-page="history">
+        <span class="icon">🕐</span> Recent History
+      </button>
+    </div>
+
+    <!-- Active wallpaper mini card -->
+    <div class="sidebar-footer">
+      <div class="active-wallpaper-mini">
+        <div class="awm-label">ACTIVE WALLPAPER</div>
+        <div class="awm-row">
+          <div class="awm-thumb" id="awmThumb"></div>
+          <span class="awm-name" id="awmName">None</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <main class="main">
+
+    <!-- ── Library page ── -->
+    <section class="page active" id="page-library">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Library</h2>
+          <p class="page-sub">All your saved wallpapers.</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="search" id="searchInput" placeholder="Search wallpapers…" autocomplete="off">
+        </div>
+        <select id="sortSelect">
+          <option value="lastUsed">Recently Used</option>
+          <option value="createdAt">Recently Added</option>
+          <option value="name">Alphabetical</option>
+        </select>
+        <button class="btn-secondary btn-sm" id="btnFilterFav" data-active="false">⭐ Favorites</button>
+      </div>
+
+      <div id="libraryGrid" class="wallpaper-grid">
+        <!-- Cards rendered by JS -->
+      </div>
+      <div id="libraryEmpty" class="empty-state hidden">
+        <div class="empty-icon">🖼</div>
+        <div class="empty-title">No wallpapers yet</div>
+        <div class="empty-sub">Click "Add Wallpaper" to upload an image or add one from a URL.</div>
+        <button class="btn-primary" id="btnUploadEmpty">+ Add Wallpaper</button>
+      </div>
+    </section>
+
+    <!-- ── Favorites page ── -->
+    <section class="page" id="page-favorites">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Favorites</h2>
+          <p class="page-sub">Wallpapers you've starred for quick access.</p>
+        </div>
+      </div>
+      <div id="favGrid" class="wallpaper-grid"></div>
+      <div id="favEmpty" class="empty-state hidden">
+        <div class="empty-icon">⭐</div>
+        <div class="empty-title">No favorites yet</div>
+        <div class="empty-sub">Click the star on any wallpaper to add it here.</div>
+      </div>
+    </section>
+
+    <!-- ── History page ── -->
+    <section class="page" id="page-history">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Recent History</h2>
+          <p class="page-sub">Previously applied wallpapers. Removing an entry does not delete the wallpaper.</p>
+        </div>
+        <button class="btn-secondary btn-sm" id="btnClearHistory" style="margin-left:auto">Clear History</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+      <div id="historyEmpty" class="empty-state hidden">
+        <div class="empty-icon">🕐</div>
+        <div class="empty-title">No history yet</div>
+        <div class="empty-sub">History is recorded each time you apply a wallpaper.</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ═══════════════ UPLOAD MODAL ═══════════════ -->
+<div class="modal-backdrop hidden" id="uploadModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
+    <div class="modal-header">
+      <span class="modal-title" id="uploadModalTitle">Add Wallpaper</span>
+      <button class="modal-close" data-close="uploadModal" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="upload-tabs">
+        <button class="upload-tab active" data-tab="file">📁 From Device</button>
+        <button class="upload-tab" data-tab="url">🔗 From URL</button>
+      </div>
+
+      <!-- File panel -->
+      <div class="upload-panel active" id="uploadPanelFile">
+        <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="Click or drag to upload image">
+          <div class="drop-icon">📂</div>
+          <div class="drop-title">Click to choose or drag image here</div>
+          <div class="drop-sub">PNG, JPG, JPEG, WebP, GIF — up to ~15 MB</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+      </div>
+
+      <!-- URL panel -->
+      <div class="upload-panel" id="uploadPanelUrl">
+        <div class="field">
+          <label for="urlInput">Image URL</label>
+          <input type="url" id="urlInput" placeholder="https://example.com/image.jpg" autocomplete="off">
+        </div>
+        <button class="btn-secondary btn-sm" id="btnLoadUrl">Load Preview</button>
+      </div>
+
+      <!-- Preview -->
+      <div class="upload-preview hidden" id="uploadPreview">
+        <img id="uploadPreviewImg" alt="Preview">
+      </div>
+
+      <!-- Error -->
+      <div class="error-msg hidden" id="uploadError">⚠ <span id="uploadErrorText"></span></div>
+
+      <!-- Name field -->
+      <div class="field hidden" id="uploadNameField">
+        <label for="wallpaperName">Wallpaper Name</label>
+        <input type="text" id="wallpaperName" placeholder="My Wallpaper" autocomplete="off" maxlength="80">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-close="uploadModal">Cancel</button>
+      <button class="btn-primary" id="btnSaveUpload" disabled>Save to Library</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SETTINGS MODAL ═══════════════ -->
+<div class="modal-backdrop settings-modal hidden" id="settingsModal">
+  <div class="modal" style="max-width:680px" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div class="modal-header">
+      <span class="modal-title" id="settingsModalTitle">Wallpaper Settings</span>
+      <button class="modal-close" data-close="settingsModal" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-layout">
+        <!-- Preview canvas -->
+        <div>
+          <div class="preview-canvas" id="previewCanvas">
+            <div class="preview-img" id="previewImg"></div>
+            <!-- Fake candles for context -->
+            <div class="preview-bars" id="previewBars"></div>
+            <div class="preview-label">PREVIEW · NOT EXACT</div>
+          </div>
+          <p style="font-size:10px;color:var(--text-faint);margin-top:6px;">
+            Preview approximates how the wallpaper will look. Exact appearance depends on TradingView's chart layout.
+          </p>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-panel">
+          <div class="control-group">
+            <div class="control-label">Opacity</div>
+            <div class="control-row">
+              <input type="range" id="ctrlOpacity" min="5" max="95" step="1" value="18">
+              <span class="control-value" id="ctrlOpacityVal">18%</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">Scaling</div>
+            <div class="seg-buttons">
+              <button class="seg-btn active" data-size="cover">Cover</button>
+              <button class="seg-btn" data-size="contain">Contain</button>
+              <button class="seg-btn" data-size="stretch">Stretch</button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">Blend Mode (โหมดผสมสี)</div>
+            <select id="ctrlBlendMode" style="width:100%;padding:6px 8px;font-size:11px;">
+              <option value="normal">Normal (ปกติ)</option>
+              <option value="screen">Screen (แนะนำธีมมืด: ตัดสีดำออก กราฟสว่างชัด)</option>
+              <option value="multiply">Multiply (แนะนำธีมสว่าง: ตัดสีขาวออก)</option>
+              <option value="soft-light">Soft Light (แสงนุ่มนวล กลืนกับชาร์ต)</option>
+              <option value="overlay">Overlay (คอนทราสต์จัดจ้าน)</option>
+              <option value="lighten">Lighten (เฉพาะจุดสว่าง)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">Horizontal Position</div>
+            <div class="control-row">
+              <input type="range" id="ctrlPosX" min="0" max="100" step="1" value="50">
+              <span class="control-value" id="ctrlPosXVal">50%</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">Vertical Position</div>
+            <div class="control-row">
+              <input type="range" id="ctrlPosY" min="0" max="100" step="1" value="50">
+              <span class="control-value" id="ctrlPosYVal">50%</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">Blur</div>
+            <div class="control-row">
+              <input type="range" id="ctrlBlur" min="0" max="20" step="1" value="0">
+              <span class="control-value" id="ctrlBlurVal">0px</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">Visibility</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+              <input type="checkbox" id="ctrlVisible" checked>
+              Show wallpaper on TradingView
+            </label>
+          </div>
+
+          <button class="btn-ghost btn-sm" id="btnResetSettings" style="margin-top:auto">↺ Reset to defaults</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-close="settingsModal">Cancel</button>
+      <button class="btn-primary" id="btnApplySettings">Apply &amp; Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CONFIRM MODAL ═══════════════ -->
+<div class="modal-backdrop hidden" id="confirmModal">
+  <div class="modal" style="max-width:380px" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-header">
+      <span class="modal-title" id="confirmModalTitle">Confirm</span>
+      <button class="modal-close" data-close="confirmModal" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmModalText" style="margin:0;font-size:13px;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-close="confirmModal">Cancel</button>
+      <button class="btn-danger" id="btnConfirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TOAST CONTAINER ═══════════════ -->
+<div id="toastContainer"></div>
+
+<script src="manager.js"></script>
+</body>
+</html>
